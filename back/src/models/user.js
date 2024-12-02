@@ -7,26 +7,37 @@ const createUserTable = async () => {
   await client.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
-      username VARCHAR(100) UNIQUE NOT NULL,
-      password TEXT NOT NULL
+      email VARCHAR(100) UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      fistname TEXT NOT NULL,
+      lastname TEXT NOT NULL,
+      phonenumber TEXT NOT NULL,
+      address TEXT NOT NULL,
+      zip TEXT NOT NULL,
+      city TEXT NOT NULL,
+      country TEXT NOT NULL
     );
   `);
 };
 
-const createUser = async (username, password) => {
+const createUser = async (email, password, firstname, lastname, phonenumber, address, zip, city, country) => {
   const client = await connect();
   const hashedPassword = await bcrypt.hash(password, 10);
-  const result = await client.query(
-    'INSERT INTO users (username, password) VALUES ($1, $2) RETURNING *',
-    [username, hashedPassword]
-  );
+  const query = `
+    INSERT INTO users (email, password, firstname, lastname, phonenumber, address, zip, city, country) 
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+    RETURNING *;
+  `;
+  const values = [email, hashedPassword, firstname, lastname, phonenumber, address, zip, city, country];
+  const result = await client.query(query, values);
   return result.rows[0];
 };
 
-const findUserByUsername = async (username) => {
+
+const findUserByEmail = async (email) => {
   const client = await connect();
-  const result = await client.query('SELECT * FROM users WHERE username = $1', [username]);
+  const result = await client.query('SELECT * FROM users WHERE email = $1', [email]);
   return result.rows[0];
 };
 
-module.exports = { createUserTable, createUser, findUserByUsername };
+module.exports = { createUserTable, createUser, findUserByEmail };

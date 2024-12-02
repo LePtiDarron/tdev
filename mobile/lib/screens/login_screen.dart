@@ -10,61 +10,70 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   String errorMessage = '';
-  String token = '';
 
-  Future<void> login() async {
+  Future<void> login(context) async {
     final username = usernameController.text;
     final password = passwordController.text;
 
     if (username.isEmpty || password.isEmpty) {
       setState(() {
-        errorMessage = 'Veuillez remplir tous les champs.';
-        token = '';
+        errorMessage = 'Missing field(s).';
       });
       return;
     }
 
     final response = await AuthService().login(username, password);
 
-    setState(() {
-      if (response['success']) {
-        token = response['token'];
-        errorMessage = '';
-      } else {
+    if (response['success']) {
+      await AuthService().saveToken(response['token']);
+      Navigator.of(context).pushReplacementNamed('/home');
+    } else {
+      setState(() {
         errorMessage = response['message'];
-        token = '';
-      }
-    });
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Connexion')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: usernameController,
-              decoration: InputDecoration(labelText: 'Nom d\'utilisateur'),
-            ),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: InputDecoration(labelText: 'Mot de passe'),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: login,
-              child: Text('Se connecter'),
-            ),
-            if (errorMessage.isNotEmpty)
-              Text(errorMessage, style: TextStyle(color: Colors.red)),
-            if (token.isNotEmpty)
-              Text('Token : $token', style: TextStyle(color: Colors.green)),
-          ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 30),
+              Image.asset('assets/logo.png', width: 200),
+              const SizedBox(height: 30),
+              TextField(
+                controller: usernameController,
+                decoration: InputDecoration(labelText: 'Email'),
+              ),
+                SizedBox(height: 20),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: InputDecoration(labelText: 'Password'),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => login(context),
+                child: Text('Login'),
+              ),
+              if (errorMessage.isNotEmpty)
+                Text(errorMessage, style: TextStyle(color: Colors.red)),
+              const SizedBox(height: 20),
+              const Text('Don\'t have an account?'),
+              const SizedBox(height: 5),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pushReplacementNamed('/signup');
+                },
+                child: const Text('Signup'),
+              ),
+            ],
+          ),
         ),
       ),
     );
